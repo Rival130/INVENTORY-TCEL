@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Sosa | Inventory Web{% endblock %}
+{% block page_title %}Lista Sosa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/3.1.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/4.1.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/4.1.1/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/5.1.2/css/fixedHeader.bootstrap5.min.css">
+
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; }
+  .pl-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem 1.5rem 1rem; }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-body { padding: 0 1.5rem 1.5rem; }
+  .btn-ink { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; border-radius: 8px; font-size: .875rem; padding: .45rem .95rem; }
+  .btn-ink:hover, .btn-ink:focus { background: #000; border-color: #000; color: #fff; }
+
+  .pl-summary { display: flex; flex-wrap: wrap; gap: .25rem 1.75rem; padding: .85rem 0 1.1rem; margin-bottom: .5rem; border-bottom: 1px solid var(--pl-line); font-size: .85rem; color: var(--pl-muted); }
+  .pl-summary strong { color: var(--pl-ink); font-weight: 600; margin-left: .3rem; font-variant-numeric: tabular-nums; }
+
+  .pl-msg { margin: 0 0 1rem; padding: .7rem 1rem; font-size: .85rem; border-radius: 8px; border: 1px solid var(--pl-line); background: var(--pl-soft); color: #374151; }
+  .pl-msg.error { color: var(--pl-alert); background: #fef3f2; border-color: #fecdca; }
+
+  #purchaseTable { width: 100% !important; border-collapse: collapse !important; }
+  #purchaseTable thead th { background: transparent; color: var(--pl-muted); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; border-bottom: 1px solid var(--pl-line) !important; padding: .8rem .75rem; }
+  #purchaseTable tbody td { vertical-align: middle; padding: .85rem .75rem; font-size: .9rem; color: var(--pl-ink); border-bottom: 1px solid var(--pl-line); background: transparent; box-shadow: none; }
+  #purchaseTable tbody tr:hover td { background: var(--pl-soft); }
+  #purchaseTable tfoot th { padding: .75rem .5rem 0; border: 0; background: transparent; font-weight: 400; }
+  #purchaseTable tfoot input, #purchaseTable tfoot select { width: 100%; min-width: 80px; font-size: .8rem; padding: .3rem .55rem; color: var(--pl-ink); background: #fff; border: 1px solid var(--pl-line); border-radius: 6px; }
+  #purchaseTable tfoot input:focus, #purchaseTable tfoot select:focus { outline: none; border-color: #9ca3af; }
+
+  .pl-muted { color: var(--pl-muted); }
+  .pl-num { font-variant-numeric: tabular-nums; }
+  .pl-inv { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; font-weight: 600; color: var(--pl-ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  .pl-inv:hover { color: var(--pl-ink); border-bottom-color: #9ca3af; }
+  .pl-tag { display: inline-block; min-width: 2rem; padding: .15rem .6rem; border-radius: 999px; background: var(--pl-soft); border: 1px solid var(--pl-line); font-size: .78rem; color: #374151; text-align: center; }
+
+  .pl-dot { display: inline-flex; align-items: center; gap: .45rem; font-size: .85rem; }
+  .pl-dot::before { content: ''; box-sizing: border-box; width: 8px; height: 8px; border-radius: 50%; }
+  .pl-dot.st-pending::before { border: 1.5px solid #6b7280; background: transparent; }
+  .pl-dot.st-received::before { background: #374151; }
+  .pl-dot.st-cancelled { color: var(--pl-muted); text-decoration: line-through; }
+  .pl-dot.st-cancelled::before { background: #c2c7cf; }
+
+  .pl-act { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: var(--pl-muted); border-radius: 8px; transition: background .15s, color .15s; text-decoration: none; }
+  .pl-act:hover { background: var(--pl-soft); color: var(--pl-ink); }
+  .pl-act.danger:hover { color: var(--pl-alert); }
+
+  .dt-buttons { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .dt-buttons .btn { background: #fff; border: 1px solid var(--pl-line); color: #374151; border-radius: 8px !important; font-size: .8rem; padding: .35rem .75rem; box-shadow: none; }
+  .dt-buttons .btn:hover { background: var(--pl-soft); border-color: #cfd4da; color: var(--pl-ink); }
+  div.dt-container div.dt-search input { min-width: 220px; border: 1px solid var(--pl-line); border-radius: 8px; padding: .4rem .75rem; margin-left: .35rem; font-size: .875rem; }
+  div.dt-container div.dt-search input:focus, div.dt-container div.dt-length select:focus { outline: none; border-color: #9ca3af; box-shadow: none; }
+  div.dt-container div.dt-length select { border: 1px solid var(--pl-line); border-radius: 8px; padding: .3rem 1.8rem .3rem .6rem; font-size: .85rem; }
+  div.dt-container div.dt-info, div.dt-container div.dt-length { font-size: .82rem; color: var(--pl-muted); }
+  div.dt-container .page-link { border: 0; border-radius: 8px; color: #374151; font-size: .85rem; background: transparent; }
+  div.dt-container .page-item.active .page-link { background: var(--pl-ink); color: #fff; }
+  div.dt-container .page-item:not(.active):not(.disabled) .page-link:hover { background: var(--pl-soft); }
+  div.dt-container .page-item.disabled .page-link { color: #c2c7cf; background: transparent; }
+  div.dt-container div.dt-layout-row { margin: .6rem 0; }
+
+  .pl-modal .modal-content { border: 0; border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.15); }
+  .pl-modal .modal-header, .pl-modal .modal-footer { border: 0; }
+
+  @media (max-width: 767.98px) {
+    .pl-head { padding: 1.1rem 1rem .75rem; }
+    .pl-body { padding: 0 1rem 1rem; }
+    div.dt-container div.dt-search { width: 100%; }
+    div.dt-container div.dt-search input { min-width: 0; width: 100%; margin: .4rem 0 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load l10n %}
+<div class="container-fluid py-4">
+  <div class="pl-card">
+    <div class="pl-head">
+      <div>
+        <h1 class="pl-title">Sosa</h1>
+        <p class="pl-sub">Rekordu sosa husi fornesedór no simu stock iha armazén.</p>
+      </div>
+      <a href="{% url 'purchases:purchase_create' %}" class="btn btn-ink">
+        <i class="fas fa-plus me-1"></i> Sosa Foun
+      </a>
+    </div>
+
+    <div class="pl-body">
+      {% if messages %}
+        {% for m in messages %}
+          <div class="pl-msg{% if m.tags == 'error' %} error{% endif %}" role="status">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="pl-summary" aria-live="polite">
+        <span>Sosa<strong id="statRows">0</strong></span>
+        <span>Pendente<strong id="statPending">0</strong></span>
+        <span>Valór total (la inklui kansela)<strong id="statValue">$0.00</strong></span>
+      </div>
+
+      <table id="purchaseTable" class="table align-middle w-100">
+        <thead>
+          <tr>
+            <th class="text-center no-export">#</th>
+            <th>Fatura</th>
+            <th>Fornesedór</th>
+            <th>Armazén</th>
+            <th>Data</th>
+            <th class="text-center">Item</th>
+            <th class="text-end">Total</th>
+            <th>Status</th>
+            <th class="text-end no-export">Aksaun</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in purchases %}
+          <tr data-status="{{ p.status }}">
+            <td class="text-center pl-muted pl-num">{{ forloop.counter }}</td>
+            <td><a class="pl-inv" href="{% url 'purchases:purchase_detail' p.pk %}">{{ p.invoice_no }}</a></td>
+            <td>{{ p.supplier.name }}</td>
+            <td>{{ p.warehouse.name }}</td>
+            <td class="pl-num" data-order="{{ p.date|date:'Y-m-d' }}">{{ p.date|date:"d/m/Y" }}</td>
+            <td class="text-center pl-num" data-order="{{ p.item_count }}"><span class="pl-tag">{{ p.item_count }}</span></td>
+            <td class="text-end pl-num fw-medium" data-order="{{ p.grand_total|unlocalize }}">${{ p.grand_total|floatformat:2 }}</td>
+            <td>
+              <span class="pl-dot st-{{ p.status }}">
+                {% if p.status == 'pending' %}Pendente{% elif p.status == 'received' %}Simu ona{% else %}Kansela{% endif %}
+              </span>
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'purchases:purchase_detail' p.pk %}" class="pl-act" title="Haree detallu" aria-label="Haree detallu {{ p.invoice_no }}">
+                <i class="fas fa-eye"></i>
+              </a>
+              {% if p.status == 'pending' %}
+              <a href="{% url 'purchases:purchase_update' p.pk %}" class="pl-act" title="Edita" aria-label="Edita {{ p.invoice_no }}">
+                <i class="fas fa-pen"></i>
+              </a>
+              {% endif %}
+              {% if p.status != 'received' %}
+              <button type="button" class="pl-act danger btn-delete"
+                      data-url="{% url 'purchases:purchase_delete' p.pk %}" data-name="{{ p.invoice_no|escape }}"
+                      title="Hamoos" aria-label="Hamoos {{ p.invoice_no }}">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th></th>
+            <th><input type="search" placeholder="Buka fatura..." aria-label="Filtra fatura"></th>
+            <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade pl-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <form method="post" id="deleteForm" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-body p-4 text-center">
+        <h2 class="fs-6 fw-semibold mb-2" id="deleteModalLabel">Hamoos sosa?</h2>
+        <p class="mb-1 fw-medium" id="deleteName"></p>
+        <p class="pl-muted small mb-0">Asaun ida-ne’e bele la konsege fila fali.</p>
+      </div>
+      <div class="modal-footer justify-content-center pt-0 pb-4 gap-2">
+        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Kansela</button>
+        <button type="submit" class="btn btn-danger">Hamoos</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/3.1.4/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/3.1.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/4.1.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/4.1.1/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/5.1.2/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.colVis.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const tableEl = document.getElementById('purchaseTable');
+  const COL = { INVOICE: 1, SUPPLIER: 2, WAREHOUSE: 3, DATE: 4, ITEMS: 5, TOTAL: 6, STATUS: 7 };
+  const today = () => new Date().toISOString().slice(0, 10);
+  const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const exportCols = {
+    columns: ':not(.no-export)',
+    format: { body: (data, row, col, node) => (node ? node.textContent.replace(/\s+/g, ' ').trim() : data) }
+  };
+
+  const table = new DataTable(tableEl, {
+    responsive: true,
+    fixedHeader: { header: true, headerOffset: document.querySelector('.navbar.fixed-top, .sticky-top')?.offsetHeight || 0 },
+    stateSave: true,
+    stateDuration: 60 * 60 * 24 * 7,
+    autoWidth: false,
+    deferRender: true,
+    searchDelay: 250,
+    pagingType: 'simple_numbers',
+    pageLength: 10,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Hotu']],
+    order: [[COL.DATE, 'desc']],
+    columnDefs: [
+      { targets: [0, 8], orderable: false, searchable: false, className: 'no-export' },
+      { targets: [COL.TOTAL, COL.ITEMS], type: 'num' },
+      { targets: [COL.INVOICE, 8], responsivePriority: 1 },
+      { targets: [COL.TOTAL, COL.STATUS], responsivePriority: 2 },
+      { targets: [COL.SUPPLIER, COL.DATE], responsivePriority: 3 },
+      { targets: [COL.WAREHOUSE, COL.ITEMS], responsivePriority: 10000 }
+    ],
+    layout: {
+      topStart: {
+        buttons: [
+          { extend: 'excelHtml5', text: 'Excel', title: 'Lista Sosa', filename: () => 'sosa_' + today(), exportOptions: exportCols },
+          {
+            extend: 'pdfHtml5', text: 'PDF', title: 'Lista Sosa', filename: () => 'sosa_' + today(),
+            orientation: 'landscape', pageSize: 'A4', exportOptions: exportCols,
+            customize: function (doc) {
+              doc.defaultStyle.fontSize = 8;
+              doc.styles.tableHeader.fillColor = '#1f2328';
+              doc.content[doc.content.length - 1].layout = 'lightHorizontalLines';
+              doc.footer = (page, pages) => ({ text: page + ' / ' + pages, alignment: 'center', fontSize: 8, margin: [0, 8, 0, 0] });
+            }
+          },
+          { extend: 'print', text: 'Print', title: 'Lista Sosa', exportOptions: exportCols },
+          { extend: 'colvis', text: 'Koluna', columns: ':not(.no-export)' }
+        ]
+      },
+      topEnd: 'search',
+      bottomStart: ['pageLength', 'info'],
+      bottomEnd: 'paging'
+    },
+    initComplete: function () {
+      const api = this.api();
+      api.columns().every(function () {
+        const column = this;
+        const idx = column.index();
+        const footer = column.footer();
+        if (!footer) return;
+        const label = column.header().textContent.trim();
+
+        if (idx === COL.INVOICE) {
+          const input = footer.querySelector('input');
+          if (!input) return;
+          input.addEventListener('input', () => {
+            if (column.search() !== input.value) column.search(input.value).draw();
+          });
+        } else if ([COL.SUPPLIER, COL.WAREHOUSE, COL.STATUS].includes(idx)) {
+          const select = document.createElement('select');
+          select.setAttribute('aria-label', 'Filtra ' + label);
+          select.add(new Option('Hotu', ''));
+          footer.replaceChildren(select);
+          const values = new Set();
+          column.nodes().each(n => { const t = n.textContent.replace(/\s+/g, ' ').trim(); if (t) values.add(t); });
+          [...values].sort((a, b) => a.localeCompare(b)).forEach(v => select.add(new Option(v, v)));
+          select.addEventListener('change', () => {
+            const v = select.value;
+            column.search(v ? '^\\s*' + escapeRegex(v) + '\\s*$' : '', { regex: true, smart: false }).draw();
+          });
+        }
+      });
+    },
+    drawCallback: function () {
+      const api = this.api();
+      const info = api.page.info();
+      api.column(0, { search: 'applied', order: 'applied', page: 'current' }).nodes().each((cell, i) => {
+        cell.textContent = info.start + i + 1;
+      });
+      let pending = 0, value = 0;
+      api.rows({ search: 'applied' }).every(function () {
+        const tr = this.node();
+        if (tr.dataset.status === 'pending') pending++;
+        if (tr.dataset.status !== 'cancelled') value += parseFloat(tr.cells[COL.TOTAL].dataset.order) || 0;
+      });
+      document.getElementById('statRows').textContent = info.recordsDisplay.toLocaleString('en-US');
+      document.getElementById('statPending').textContent = pending.toLocaleString('en-US');
+      document.getElementById('statValue').textContent = money.format(value);
+    },
+    language: {
+      search: '', searchPlaceholder: 'Buka sosa...',
+      lengthMenu: 'Hatudu _MENU_',
+      info: 'Hatudu _START_ to _END_ husi _TOTAL_ sosa',
+      infoEmpty: 'La iha dadus',
+      infoFiltered: '(filtra husi _MAX_ total)',
+      zeroRecords: 'La hetan dadus ne’ebé hanesan',
+      emptyTable: 'Seidauk iha sosa. Klik “Sosa Foun” atu hahu.',
+      paginate: { first: 'Dahuluk', last: 'Ikus', next: 'Tuir', previous: 'Molok' },
+      buttons: { colvis: 'Koluna' }
+    }
+  });
+
+  const deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteModal'));
+  const deleteForm = document.getElementById('deleteForm');
+  const deleteName = document.getElementById('deleteName');
+  tableEl.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-delete');
+    if (!btn) return;
+    deleteName.textContent = btn.dataset.name || '';
+    deleteForm.setAttribute('action', btn.dataset.url);
+    deleteModal.show();
+  });
+
+  window.addEventListener('resize', () => table.columns.adjust().responsive.recalc());
+});
+</script>
+{% endblock %}

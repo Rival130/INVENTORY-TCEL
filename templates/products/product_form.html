@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Inventory Web{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --pl-ink: #1f2328;
+    --pl-muted: #6b7280;
+    --pl-line: #e5e7eb;
+    --pl-soft: #f6f7f8;
+    --pl-alert: #b42318;
+  }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; max-width: 960px; margin: 0 auto; }
+  .pl-head { padding: 1.5rem 1.5rem 1.1rem; border-bottom: 1px solid var(--pl-line); }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-body { padding: 1.5rem; }
+  .pl-foot { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--pl-line); }
+
+  /* Grid independente husi versaun Bootstrap */
+  .pl-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.1rem 1.25rem; }
+  .pl-grid + .pl-grid { margin-top: 1.1rem; }
+  .pl-span-3 { grid-column: span 3; }
+  .pl-span-4 { grid-column: span 4; }
+  .pl-span-5 { grid-column: span 5; }
+  .pl-span-6 { grid-column: span 6; }
+  .pl-span-12 { grid-column: span 12; }
+  @media (max-width: 767.98px) {
+    .pl-grid > * { grid-column: span 12; }
+    .pl-head, .pl-body, .pl-foot { padding-left: 1rem; padding-right: 1rem; }
+  }
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    .pl-span-3 { grid-column: span 6; }
+  }
+
+  /* Kampu */
+  .pl-field label { display: block; margin-bottom: .35rem; font-size: .8rem; font-weight: 600; color: #374151; }
+  .pl-field input:not([type=checkbox]):not([type=file]),
+  .pl-field select,
+  .pl-field textarea {
+    display: block; width: 100%; padding: .5rem .75rem; font-size: .9rem; line-height: 1.4;
+    color: var(--pl-ink); background: #fff; border: 1px solid var(--pl-line); border-radius: 8px;
+    box-shadow: none; transition: border-color .15s;
+  }
+  .pl-field textarea { min-height: 96px; resize: vertical; }
+  .pl-field input:focus, .pl-field select:focus, .pl-field textarea:focus { outline: none; border-color: #6b7280; box-shadow: 0 0 0 3px rgba(31,35,40,.06); }
+  .pl-field input::placeholder, .pl-field textarea::placeholder { color: #a3a9b3; }
+  .pl-field.has-error input:not([type=checkbox]):not([type=file]),
+  .pl-field.has-error select,
+  .pl-field.has-error textarea { border-color: var(--pl-alert); }
+  .pl-error { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-alert); }
+  .pl-hint { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-muted); }
+
+  /* Upload imajen */
+  .pl-upload { display: flex; align-items: center; gap: .9rem; }
+  .pl-preview { width: 56px; height: 56px; flex: none; border-radius: 10px; border: 1px solid var(--pl-line); object-fit: cover; background: var(--pl-soft); }
+  .pl-preview-empty { display: inline-flex; align-items: center; justify-content: center; color: #c2c7cf; }
+  .pl-field input[type=file] { width: 100%; font-size: .85rem; color: var(--pl-muted); }
+  .pl-field input[type=file]::file-selector-button {
+    margin-right: .75rem; padding: .4rem .85rem; font-size: .8rem; color: #374151; background: #fff;
+    border: 1px solid var(--pl-line); border-radius: 8px; cursor: pointer; transition: background .15s;
+  }
+  .pl-field input[type=file]::file-selector-button:hover { background: var(--pl-soft); }
+  .pl-upload .pl-current { font-size: .8rem; color: var(--pl-muted); word-break: break-all; }
+
+  /* Switch Ativu */
+  .pl-switch { display: inline-flex; align-items: center; gap: .65rem; cursor: pointer; margin: 0; }
+  .pl-switch input[type=checkbox] {
+    appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 38px; height: 22px; margin: 0;
+    border-radius: 999px; background: #d1d5db; border: 0; cursor: pointer; transition: background .2s;
+  }
+  .pl-switch input[type=checkbox]::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .2s;
+  }
+  .pl-switch input[type=checkbox]:checked { background: var(--pl-ink); }
+  .pl-switch input[type=checkbox]:checked::after { transform: translateX(16px); }
+  .pl-switch input[type=checkbox]:focus-visible { outline: 2px solid #9ca3af; outline-offset: 2px; }
+  .pl-switch span { font-size: .9rem; color: var(--pl-ink); }
+
+  /* Botaun */
+  .pl-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 500; line-height: 1.4; border-radius: 8px; border: 1px solid var(--pl-line); background: #fff; color: #374151; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+  .pl-btn:hover { background: var(--pl-soft); color: var(--pl-ink); text-decoration: none; }
+  .pl-btn.primary { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; }
+  .pl-btn.primary:hover { background: #000; border-color: #000; color: #fff; }
+
+  .pl-alert { margin-bottom: 1.25rem; padding: .75rem 1rem; font-size: .85rem; color: var(--pl-alert); background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px; }
+  .pl-alert ul { margin: 0; padding: 0; list-style: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pl-card">
+  <div class="pl-head">
+    <h1 class="pl-title">{{ title }}</h1>
+    <p class="pl-sub">Prense informasaun produtu iha kraik.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <div class="pl-body">
+      {% if form.non_field_errors %}
+      <div class="pl-alert" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="pl-grid">
+        <div class="pl-field pl-span-4{% if form.sku.errors %} has-error{% endif %}">
+          <label for="{{ form.sku.id_for_label }}">{{ form.sku.label }}</label>
+          {{ form.sku }}
+          {% for e in form.sku.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field pl-span-5{% if form.name.errors %} has-error{% endif %}">
+          <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% for e in form.name.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field pl-span-3{% if form.category.errors %} has-error{% endif %}">
+          <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+          {{ form.category }}
+          {% for e in form.category.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pl-grid">
+        <div class="pl-field pl-span-3{% if form.unit.errors %} has-error{% endif %}">
+          <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
+          {{ form.unit }}
+          {% for e in form.unit.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field pl-span-3{% if form.purchase_price.errors %} has-error{% endif %}">
+          <label for="{{ form.purchase_price.id_for_label }}">{{ form.purchase_price.label }}</label>
+          {{ form.purchase_price }}
+          {% for e in form.purchase_price.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field pl-span-3{% if form.selling_price.errors %} has-error{% endif %}">
+          <label for="{{ form.selling_price.id_for_label }}">{{ form.selling_price.label }}</label>
+          {{ form.selling_price }}
+          {% for e in form.selling_price.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field pl-span-3{% if form.min_stock.errors %} has-error{% endif %}">
+          <label for="{{ form.min_stock.id_for_label }}">{{ form.min_stock.label }}</label>
+          {{ form.min_stock }}
+          {% for e in form.min_stock.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pl-grid">
+        <div class="pl-field pl-span-6{% if form.image.errors %} has-error{% endif %}">
+          <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+          <div class="pl-upload">
+            {% if form.instance.pk and form.instance.image %}
+              <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" class="pl-preview" id="imagePreview">
+            {% else %}
+              <span class="pl-preview pl-preview-empty" id="imagePlaceholder" aria-hidden="true"><i class="far fa-image"></i></span>
+              <img src="" alt="" class="pl-preview" id="imagePreview" hidden>
+            {% endif %}
+            <div style="flex:1; min-width:0;">{{ form.image }}</div>
+          </div>
+          {% for e in form.image.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field pl-span-6{% if form.description.errors %} has-error{% endif %}">
+          <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% for e in form.description.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pl-grid">
+        <div class="pl-field pl-span-12">
+          <label class="pl-switch" for="{{ form.is_active.id_for_label }}">
+            {{ form.is_active }}
+            <span>{{ form.is_active.label }}</span>
+          </label>
+          {% for e in form.is_active.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="pl-foot">
+      <button type="submit" class="pl-btn primary"><i class="fas fa-check"></i> Rai</button>
+      <a href="{% url 'products:list' %}" class="pl-btn">Kansela</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Preview imajen bainhira hili file foun
+  document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('{{ form.image.id_for_label }}');
+    const preview = document.getElementById('imagePreview');
+    const placeholder = document.getElementById('imagePlaceholder');
+    if (!input || !preview) return;
+    input.addEventListener('change', function () {
+      const file = input.files && input.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(file);
+      preview.onload = () => URL.revokeObjectURL(url);
+      preview.src = url;
+      preview.hidden = false;
+      if (placeholder) placeholder.hidden = true;
+    });
+  });
+</script>
+{% endblock %}

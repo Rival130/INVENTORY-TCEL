@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Relatóriu | Inventory Web{% endblock %}
+{% block page_title %}Relatóriu{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-wrap { max-width: 1040px; margin: 0 auto; }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 1.5rem; font-size: .85rem; color: var(--pl-muted); }
+
+  .pl-msg { margin: 0 0 1rem; padding: .7rem 1rem; font-size: .85rem; border-radius: 8px; border: 1px solid var(--pl-line); background: var(--pl-soft); color: #374151; }
+  .pl-msg.error { color: var(--pl-alert); background: #fef3f2; border-color: #fecdca; }
+
+  .pl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .pl-tile { display: flex; gap: 1rem; padding: 1.25rem; background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; text-decoration: none; color: inherit; transition: border-color .15s, background .15s; }
+  .pl-tile:hover { border-color: #9ca3af; background: #fcfcfd; color: inherit; }
+  .pl-tile .ico { flex: none; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--pl-soft); border: 1px solid var(--pl-line); color: #374151; }
+  .pl-tile h2 { margin: 0 0 .2rem; font-size: .98rem; font-weight: 600; color: var(--pl-ink); }
+  .pl-tile p { margin: 0; font-size: .84rem; color: var(--pl-muted); }
+
+  .pl-card { margin-top: 1.5rem; padding: 1.25rem 1.5rem; background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+  .pl-card h3 { margin: 0 0 .2rem; font-size: .95rem; font-weight: 600; color: var(--pl-ink); }
+  .pl-card p { margin: 0; font-size: .84rem; color: var(--pl-muted); }
+  .pl-card code { font-size: .8rem; background: var(--pl-soft); padding: .1rem .4rem; border-radius: 6px; border: 1px solid var(--pl-line); }
+
+  .pl-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 500; border-radius: 8px; border: 1px solid var(--pl-ink); background: var(--pl-ink); color: #fff; cursor: pointer; }
+  .pl-btn:hover { background: #000; }
+
+  @media (max-width: 767.98px) { .pl-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="pl-wrap">
+    <h1 class="pl-title">Relatóriu</h1>
+    <p class="pl-sub">Hili relatóriu atu haree no esporta (Excel, PDF, Print).</p>
+
+    {% if messages %}
+      {% for m in messages %}
+        <div class="pl-msg{% if m.tags == 'error' %} error{% endif %}" role="status">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="pl-grid">
+      <a class="pl-tile" href="{% url 'reports:stock' %}">
+        <span class="ico"><i class="fas fa-boxes-stacked"></i></span>
+        <div><h2>Relatóriu Stock</h2><p>Kuantidade no valór stock iha armazén, inklui stock iha data pasadu (snapshot).</p></div>
+      </a>
+      <a class="pl-tile" href="{% url 'reports:movements' %}">
+        <span class="ico"><i class="fas fa-right-left"></i></span>
+        <div><h2>Relatóriu Movimentu</h2><p>Tama, sai no ajustamentu stock iha períodu ne'ebé hili.</p></div>
+      </a>
+      <a class="pl-tile" href="{% url 'reports:purchases' %}">
+        <span class="ico"><i class="fas fa-cart-shopping"></i></span>
+        <div><h2>Relatóriu Sosa</h2><p>Sosa husi fornesedór ho status no valór total.</p></div>
+      </a>
+      <a class="pl-tile" href="{% url 'reports:prices' %}">
+        <span class="ico"><i class="fas fa-tags"></i></span>
+        <div><h2>Istória Folin</h2><p>Mudansa folin sosa no faan, ho margen.</p></div>
+      </a>
+    </div>
+
+    <div class="pl-card">
+      <div>
+        <h3>Snapshot Stock</h3>
+        <p>
+          {% if last_snapshot %}Snapshot ikus: <strong>{{ last_snapshot|date:"d/m/Y" }}</strong> ({{ snapshot_rows }} liña).{% else %}Seidauk iha snapshot.{% endif %}
+          Agenda loron-loron ho <code>python manage.py take_stock_snapshot</code>.
+        </p>
+      </div>
+      {% if can_snapshot %}
+      <form method="post" action="{% url 'reports:snapshot' %}">
+        {% csrf_token %}
+        <button type="submit" class="pl-btn"><i class="fas fa-camera"></i> Foti Snapshot Ohin</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Inventory Web{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; max-width: 920px; margin: 0 auto; }
+  .pl-head { padding: 1.5rem 1.5rem 1.1rem; border-bottom: 1px solid var(--pl-line); }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+  .pl-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.25rem; }
+  .pl-row.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pl-section { margin: .25rem 0 -.5rem; font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--pl-muted); }
+  .pl-foot { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--pl-line); }
+
+  .pl-field label { display: block; margin-bottom: .35rem; font-size: .8rem; font-weight: 600; color: #374151; }
+  .pl-field input:not([type=checkbox]), .pl-field select, .pl-field textarea,
+  .pl-items input:not([type=checkbox]), .pl-items select {
+    display: block; width: 100%; padding: .5rem .75rem; font-size: .9rem; line-height: 1.4;
+    color: var(--pl-ink); background: #fff; border: 1px solid var(--pl-line); border-radius: 8px; box-shadow: none; transition: border-color .15s;
+  }
+  .pl-field textarea { min-height: 84px; resize: vertical; }
+  .pl-field input:focus, .pl-field select:focus, .pl-field textarea:focus,
+  .pl-items input:focus, .pl-items select:focus { outline: none; border-color: #6b7280; box-shadow: 0 0 0 3px rgba(31,35,40,.06); }
+  .pl-field input::placeholder, .pl-field textarea::placeholder { color: #a3a9b3; }
+  .pl-field.has-error input, .pl-field.has-error select, .pl-field.has-error textarea,
+  .pl-items .has-error input, .pl-items .has-error select { border-color: var(--pl-alert); }
+  .pl-error { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-alert); }
+  .pl-hint { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-muted); }
+
+  .pl-items-wrap { border: 1px solid var(--pl-line); border-radius: 10px; overflow: hidden; }
+  .pl-items { width: 100%; border-collapse: collapse; }
+  .pl-items thead th { padding: .65rem .75rem; background: var(--pl-soft); color: var(--pl-muted); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; border-bottom: 1px solid var(--pl-line); white-space: nowrap; }
+  .pl-items td { padding: .6rem; vertical-align: top; border-bottom: 1px solid var(--pl-line); }
+  .pl-items tbody tr:last-child td { border-bottom: 0; }
+  .pl-items .col-product { width: 52%; }
+  .pl-items .col-qty { width: 18%; }
+  .pl-items .col-stock { width: 24%; }
+  .pl-items .col-act { width: 6%; }
+  .pl-items td.col-stock { padding-top: 1rem; font-size: .82rem; color: var(--pl-muted); font-variant-numeric: tabular-nums; }
+  .pl-items td.col-stock.warn { color: var(--pl-alert); font-weight: 600; }
+  .pl-del { display: none; }
+  .pl-rm { width: 32px; height: 32px; margin-top: .1rem; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--pl-muted); border-radius: 8px; transition: background .15s, color .15s; cursor: pointer; }
+  .pl-rm:hover { background: var(--pl-soft); color: var(--pl-alert); }
+  .pl-items-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .75rem .9rem; border-top: 1px solid var(--pl-line); background: #fff; }
+  .pl-total { font-size: .85rem; color: var(--pl-muted); }
+  .pl-total strong { margin-left: .5rem; font-size: 1.05rem; color: var(--pl-ink); font-variant-numeric: tabular-nums; }
+
+  .pl-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 500; line-height: 1.4; border-radius: 8px; border: 1px solid var(--pl-line); background: #fff; color: #374151; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+  .pl-btn:hover { background: var(--pl-soft); color: var(--pl-ink); text-decoration: none; }
+  .pl-btn.primary { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; }
+  .pl-btn.primary:hover { background: #000; border-color: #000; color: #fff; }
+  .pl-btn.small { padding: .35rem .8rem; font-size: .8rem; }
+
+  .pl-alert { padding: .75rem 1rem; font-size: .85rem; color: var(--pl-alert); background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px; }
+
+  @media (max-width: 767.98px) {
+    .pl-row, .pl-row.three { grid-template-columns: 1fr; }
+    .pl-head, .pl-body, .pl-foot { padding-left: 1rem; padding-right: 1rem; }
+    .pl-items thead { display: none; }
+    .pl-items, .pl-items tbody, .pl-items tr, .pl-items td { display: block; width: 100%; }
+    .pl-items tr { padding: .6rem .5rem; border-bottom: 1px solid var(--pl-line); }
+    .pl-items td { border: 0; padding: .25rem .5rem; }
+    .pl-items td.col-stock { padding-top: .25rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pl-card">
+  <div class="pl-head">
+    <h1 class="pl-title">{{ title }}</h1>
+    <p class="pl-sub">Pedidu foti sasán husi armazén. Aprovadór sei revisa molok entrega.</p>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="pl-body">
+      {% if form.non_field_errors %}
+      <div class="pl-alert" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="pl-row three">
+        <div class="pl-field{% if form.warehouse.errors %} has-error{% endif %}">
+          <label for="{{ form.warehouse.id_for_label }}">{{ form.warehouse.label }}</label>
+          {{ form.warehouse }}
+          {% for e in form.warehouse.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field{% if form.department.errors %} has-error{% endif %}">
+          <label for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+          {{ form.department }}
+          {% for e in form.department.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field{% if form.priority.errors %} has-error{% endif %}">
+          <label for="{{ form.priority.id_for_label }}">{{ form.priority.label }}</label>
+          {{ form.priority }}
+          {% for e in form.priority.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pl-row">
+        <div class="pl-field{% if form.needed_date.errors %} has-error{% endif %}">
+          <label for="{{ form.needed_date.id_for_label }}">{{ form.needed_date.label }}</label>
+          {{ form.needed_date }}
+          {% for e in form.needed_date.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+          <small class="pl-hint">Opsionál.</small>
+        </div>
+        <div class="pl-field{% if form.purpose.errors %} has-error{% endif %}">
+          <label for="{{ form.purpose.id_for_label }}">{{ form.purpose.label }}</label>
+          {{ form.purpose }}
+          {% for e in form.purpose.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pl-section">Sasán Husu</div>
+
+      {% if formset.non_form_errors %}
+      <div class="pl-alert" role="alert">{{ formset.non_form_errors }}</div>
+      {% endif %}
+
+      {{ formset.management_form }}
+      <div class="pl-items-wrap">
+        <table class="pl-items">
+          <thead>
+            <tr>
+              <th class="col-product">Produtu</th>
+              <th class="col-qty">Kuantidade</th>
+              <th class="col-stock">Stock disponivel</th>
+              <th class="col-act"></th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody">
+            {% for f in formset %}
+            <tr class="pl-item-row">
+              <td class="col-product{% if f.product.errors %} has-error{% endif %}">
+                {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+                {{ f.product }}
+                {% for e in f.product.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+                {% for e in f.non_field_errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+              </td>
+              <td class="col-qty{% if f.quantity.errors %} has-error{% endif %}">
+                {{ f.quantity }}
+                {% for e in f.quantity.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+              </td>
+              <td class="col-stock">—</td>
+              <td class="col-act">
+                <span class="pl-del">{{ f.DELETE }}</span>
+                <button type="button" class="pl-rm" title="Hasai liña" aria-label="Hasai liña"><i class="fas fa-xmark"></i></button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="pl-items-foot">
+          <button type="button" class="pl-btn small" id="addRow"><i class="fas fa-plus"></i> Aumenta Item</button>
+          <div class="pl-total">Total kuantidade<strong id="grandQty">0</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pl-foot">
+      <button type="submit" class="pl-btn primary"><i class="fas fa-paper-plane"></i> Haruka Rekizisaun</button>
+      <a href="{% url 'requisitions:requisition_list' %}" class="pl-btn">Kansela</a>
+    </div>
+  </form>
+</div>
+
+<template id="itemTemplate">
+  <tr class="pl-item-row">
+    <td class="col-product">
+      {% for h in formset.empty_form.hidden_fields %}{{ h }}{% endfor %}
+      {{ formset.empty_form.product }}
+    </td>
+    <td class="col-qty">{{ formset.empty_form.quantity }}</td>
+    <td class="col-stock">—</td>
+    <td class="col-act">
+      <span class="pl-del">{{ formset.empty_form.DELETE }}</span>
+      <button type="button" class="pl-rm" title="Hasai liña" aria-label="Hasai liña"><i class="fas fa-xmark"></i></button>
+    </td>
+  </tr>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const prefix = '{{ formset.prefix }}';
+  const body = document.getElementById('itemsBody');
+  const tpl = document.getElementById('itemTemplate');
+  const totalForms = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+  const grandQty = document.getElementById('grandQty');
+  const warehouseSel = document.getElementById('{{ form.warehouse.id_for_label }}');
+  const lookupUrl = '{% url "stock:quantity" %}';
+
+  const visibleRows = () => [...body.querySelectorAll('.pl-item-row')].filter(r => !r.hidden);
+
+  function recalc() {
+    let total = 0;
+    visibleRows().forEach(row => {
+      total += parseInt(row.querySelector('input[name$="-quantity"]').value, 10) || 0;
+      checkWarn(row);
+    });
+    grandQty.textContent = total.toLocaleString('en-US');
+  }
+
+  // Stock disponivel ba kada liña (husi endpoint stock)
+  const cache = new Map();
+  async function fetchStock(product, warehouse) {
+    const key = product + ':' + warehouse;
+    if (cache.has(key)) return cache.get(key);
+    const res = await fetch(lookupUrl + '?product=' + encodeURIComponent(product) + '&warehouse=' + encodeURIComponent(warehouse), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    cache.set(key, data);
+    return data;
+  }
+
+  function checkWarn(row) {
+    const cell = row.querySelector('.col-stock');
+    const available = cell.dataset.available;
+    if (available === undefined) { cell.classList.remove('warn'); return; }
+    const qty = parseInt(row.querySelector('input[name$="-quantity"]').value, 10) || 0;
+    cell.classList.toggle('warn', qty > parseInt(available, 10));
+  }
+
+  async function updateRowStock(row) {
+    const cell = row.querySelector('.col-stock');
+    const product = row.querySelector('select[name$="-product"]').value;
+    const warehouse = warehouseSel.value;
+    delete cell.dataset.available;
+    if (!product || !warehouse) { cell.textContent = '—'; cell.classList.remove('warn'); return; }
+    try {
+      const d = await fetchStock(product, warehouse);
+      cell.dataset.available = d.quantity;
+      cell.textContent = d.quantity.toLocaleString('en-US') + (d.unit ? ' ' + d.unit : '');
+      checkWarn(row);
+    } catch (e) { cell.textContent = '—'; }
+  }
+
+  function addRow() {
+    const index = parseInt(totalForms.value, 10);
+    const holder = document.createElement('tbody');
+    holder.innerHTML = tpl.innerHTML.replace(/__prefix__/g, index);
+    const row = holder.firstElementChild;
+    body.appendChild(row);
+    totalForms.value = index + 1;
+    recalc();
+    return row;
+  }
+
+  body.addEventListener('click', function (e) {
+    const btn = e.target.closest('.pl-rm');
+    if (!btn) return;
+    const row = btn.closest('.pl-item-row');
+    const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (del) del.checked = true;
+    row.hidden = true;
+    if (visibleRows().length === 0) addRow();
+    recalc();
+  });
+
+  body.addEventListener('change', function (e) {
+    if (e.target.matches('select[name$="-product"]')) updateRowStock(e.target.closest('.pl-item-row'));
+  });
+  body.addEventListener('input', function (e) {
+    if (e.target.matches('input[name$="-quantity"]')) recalc();
+  });
+  warehouseSel.addEventListener('change', () => { cache.clear(); visibleRows().forEach(updateRowStock); });
+
+  document.getElementById('addRow').addEventListener('click', function () {
+    const row = addRow();
+    const sel = row.querySelector('select');
+    if (sel) sel.focus();
+  });
+
+  body.querySelectorAll('.pl-item-row').forEach(row => {
+    const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (del && del.checked) row.hidden = true;
+  });
+  if (visibleRows().length === 0) addRow();
+  visibleRows().forEach(updateRowStock);
+  recalc();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Rekizisaun | Inventory Web{% endblock %}
+{% block page_title %}Lista Rekizisaun{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/3.1.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/4.1.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/4.1.1/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/5.1.2/css/fixedHeader.bootstrap5.min.css">
+
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; }
+  .pl-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem 1.5rem 1rem; }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-body { padding: 0 1.5rem 1.5rem; }
+  .btn-ink { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; border-radius: 8px; font-size: .875rem; padding: .45rem .95rem; }
+  .btn-ink:hover, .btn-ink:focus { background: #000; border-color: #000; color: #fff; }
+
+  .pl-summary { display: flex; flex-wrap: wrap; gap: .25rem 1.75rem; padding: .85rem 0 1.1rem; margin-bottom: .5rem; border-bottom: 1px solid var(--pl-line); font-size: .85rem; color: var(--pl-muted); }
+  .pl-summary strong { color: var(--pl-ink); font-weight: 600; margin-left: .3rem; font-variant-numeric: tabular-nums; }
+
+  .pl-msg { margin: 0 0 1rem; padding: .7rem 1rem; font-size: .85rem; border-radius: 8px; border: 1px solid var(--pl-line); background: var(--pl-soft); color: #374151; }
+  .pl-msg.error { color: var(--pl-alert); background: #fef3f2; border-color: #fecdca; }
+
+  #reqTable { width: 100% !important; border-collapse: collapse !important; }
+  #reqTable thead th { background: transparent; color: var(--pl-muted); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; border-bottom: 1px solid var(--pl-line) !important; padding: .8rem .75rem; }
+  #reqTable tbody td { vertical-align: middle; padding: .85rem .75rem; font-size: .9rem; color: var(--pl-ink); border-bottom: 1px solid var(--pl-line); background: transparent; box-shadow: none; }
+  #reqTable tbody tr:hover td { background: var(--pl-soft); }
+  #reqTable tfoot th { padding: .75rem .5rem 0; border: 0; background: transparent; font-weight: 400; }
+  #reqTable tfoot input, #reqTable tfoot select { width: 100%; min-width: 80px; font-size: .8rem; padding: .3rem .55rem; color: var(--pl-ink); background: #fff; border: 1px solid var(--pl-line); border-radius: 6px; }
+  #reqTable tfoot input:focus, #reqTable tfoot select:focus { outline: none; border-color: #9ca3af; }
+
+  .pl-muted { color: var(--pl-muted); }
+  .pl-num { font-variant-numeric: tabular-nums; }
+  .pl-no { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; font-weight: 600; color: var(--pl-ink); text-decoration: none; border-bottom: 1px solid transparent; white-space: nowrap; }
+  .pl-no:hover { color: var(--pl-ink); border-bottom-color: #9ca3af; }
+  .pl-tag { display: inline-block; min-width: 2rem; padding: .15rem .6rem; border-radius: 999px; background: var(--pl-soft); border: 1px solid var(--pl-line); font-size: .78rem; color: #374151; text-align: center; }
+  .pl-urgent { color: var(--pl-alert); font-weight: 600; font-size: .85rem; }
+
+  .pl-dot { display: inline-flex; align-items: center; gap: .45rem; font-size: .85rem; white-space: nowrap; }
+  .pl-dot::before { content: ''; box-sizing: border-box; width: 8px; height: 8px; border-radius: 50%; }
+  .pl-dot.st-pending::before { border: 1.5px solid #6b7280; background: transparent; }
+  .pl-dot.st-approved::before { background: linear-gradient(90deg, #374151 50%, transparent 50%); border: 1.5px solid #374151; }
+  .pl-dot.st-issued::before { background: #374151; }
+  .pl-dot.st-rejected { color: var(--pl-alert); }
+  .pl-dot.st-rejected::before { background: var(--pl-alert); }
+  .pl-dot.st-cancelled { color: var(--pl-muted); text-decoration: line-through; }
+  .pl-dot.st-cancelled::before { background: #c2c7cf; }
+
+  .pl-act { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: var(--pl-muted); border-radius: 8px; transition: background .15s, color .15s; text-decoration: none; }
+  .pl-act:hover { background: var(--pl-soft); color: var(--pl-ink); }
+
+  .dt-buttons { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .dt-buttons .btn { background: #fff; border: 1px solid var(--pl-line); color: #374151; border-radius: 8px !important; font-size: .8rem; padding: .35rem .75rem; box-shadow: none; }
+  .dt-buttons .btn:hover, .dt-buttons .btn.active { background: var(--pl-soft); border-color: #cfd4da; color: var(--pl-ink); }
+  .dt-buttons .btn.active { border-color: var(--pl-ink); }
+  div.dt-container div.dt-search input { min-width: 220px; border: 1px solid var(--pl-line); border-radius: 8px; padding: .4rem .75rem; margin-left: .35rem; font-size: .875rem; }
+  div.dt-container div.dt-search input:focus, div.dt-container div.dt-length select:focus { outline: none; border-color: #9ca3af; box-shadow: none; }
+  div.dt-container div.dt-length select { border: 1px solid var(--pl-line); border-radius: 8px; padding: .3rem 1.8rem .3rem .6rem; font-size: .85rem; }
+  div.dt-container div.dt-info, div.dt-container div.dt-length { font-size: .82rem; color: var(--pl-muted); }
+  div.dt-container .page-link { border: 0; border-radius: 8px; color: #374151; font-size: .85rem; background: transparent; }
+  div.dt-container .page-item.active .page-link { background: var(--pl-ink); color: #fff; }
+  div.dt-container .page-item:not(.active):not(.disabled) .page-link:hover { background: var(--pl-soft); }
+  div.dt-container .page-item.disabled .page-link { color: #c2c7cf; background: transparent; }
+  div.dt-container div.dt-layout-row { margin: .6rem 0; }
+
+  @media (max-width: 767.98px) {
+    .pl-head { padding: 1.1rem 1rem .75rem; }
+    .pl-body { padding: 0 1rem 1rem; }
+    div.dt-container div.dt-search { width: 100%; }
+    div.dt-container div.dt-search input { min-width: 0; width: 100%; margin: .4rem 0 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="pl-card">
+    <div class="pl-head">
+      <div>
+        <h1 class="pl-title">Rekizisaun</h1>
+        <p class="pl-sub">{% if see_all %}Pedidu foti sasán husi armazén, hein aprovasaun no entrega.{% else %}Pedidu foti sasán ne'ebé ita-boot haruka.{% endif %}</p>
+      </div>
+      <a href="{% url 'requisitions:requisition_create' %}" class="btn btn-ink">
+        <i class="fas fa-plus me-1"></i> Rekizisaun Foun
+      </a>
+    </div>
+
+    <div class="pl-body">
+      {% if messages %}
+        {% for m in messages %}
+          <div class="pl-msg{% if m.tags == 'error' %} error{% endif %}" role="status">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="pl-summary" aria-live="polite">
+        <span>Rekizisaun<strong id="statRows">0</strong></span>
+        <span>Pendente<strong id="statPending">0</strong></span>
+        <span>Hein entrega<strong id="statApproved">0</strong></span>
+        <span>Entrega ona<strong id="statIssued">0</strong></span>
+      </div>
+
+      <table id="reqTable" class="table align-middle w-100">
+        <thead>
+          <tr>
+            <th class="text-center no-export">#</th>
+            <th>Númeru</th>
+            <th>Data</th>
+            <th>Departamentu</th>
+            <th>Armazén</th>
+            <th>Husu husi</th>
+            <th>Prioridade</th>
+            <th class="text-center">Item</th>
+            <th>Status</th>
+            <th class="text-end no-export">Aksaun</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in requisitions %}
+          <tr data-status="{{ r.status }}">
+            <td class="text-center pl-muted pl-num">{{ forloop.counter }}</td>
+            <td><a class="pl-no" href="{% url 'requisitions:requisition_detail' r.pk %}">{{ r.request_no }}</a></td>
+            <td class="pl-num" data-order="{{ r.created_at|date:'Y-m-d H:i' }}">{{ r.created_at|date:"d/m/Y" }}</td>
+            <td>{% if r.department %}{{ r.department }}{% else %}<span class="pl-muted">—</span>{% endif %}</td>
+            <td>{{ r.warehouse.name }}</td>
+            <td class="pl-muted">{% if r.requested_by %}{{ r.requested_by.get_full_name|default:r.requested_by.get_username }}{% else %}—{% endif %}</td>
+            <td>{% if r.priority == 'urgent' %}<span class="pl-urgent">Urjente</span>{% else %}Normal{% endif %}</td>
+            <td class="text-center pl-num" data-order="{{ r.item_count }}"><span class="pl-tag">{{ r.item_count }}</span></td>
+            <td>
+              <span class="pl-dot st-{{ r.status }}">
+                {% if r.status == 'pending' %}Pendente{% elif r.status == 'approved' %}Aprova ona{% elif r.status == 'rejected' %}Rejeita ona{% elif r.status == 'issued' %}Entrega ona{% else %}Kansela{% endif %}
+              </span>
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'requisitions:requisition_detail' r.pk %}" class="pl-act" title="Haree detallu" aria-label="Haree detallu {{ r.request_no }}">
+                <i class="fas fa-eye"></i>
+              </a>
+              {% if r.can_edit %}
+              <a href="{% url 'requisitions:requisition_update' r.pk %}" class="pl-act" title="Edita" aria-label="Edita {{ r.request_no }}">
+                <i class="fas fa-pen"></i>
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th></th><th></th><th></th>
+            <th><input type="search" placeholder="Buka..." aria-label="Filtra departamentu"></th>
+            <th></th><th></th><th></th><th></th><th></th><th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/3.1.4/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/3.1.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/4.1.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/4.1.1/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/5.1.2/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/4.1.2/js/buttons.colVis.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const tableEl = document.getElementById('reqTable');
+  const COL = { NO: 1, DATE: 2, DEPT: 3, WAREHOUSE: 4, BY: 5, PRIORITY: 6, ITEMS: 7, STATUS: 8 };
+  const today = () => new Date().toISOString().slice(0, 10);
+  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const exportCols = {
+    columns: ':not(.no-export)',
+    format: { body: (data, row, col, node) => (node ? node.textContent.replace(/\s+/g, ' ').trim() : data) }
+  };
+
+  let pendingOnly = false;
+  DataTable.ext.search.push(function (settings, data, dataIndex) {
+    if (settings.nTable !== tableEl || !pendingOnly) return true;
+    const node = settings.aoData[dataIndex].nTr;
+    return node && node.dataset.status === 'pending';
+  });
+
+  const table = new DataTable(tableEl, {
+    responsive: true,
+    fixedHeader: { header: true, headerOffset: document.querySelector('.navbar.fixed-top, .sticky-top')?.offsetHeight || 0 },
+    stateSave: true,
+    stateDuration: 60 * 60 * 24 * 7,
+    autoWidth: false,
+    deferRender: true,
+    searchDelay: 250,
+    pagingType: 'simple_numbers',
+    pageLength: 10,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Hotu']],
+    order: [[COL.DATE, 'desc']],
+    columnDefs: [
+      { targets: [0, 9], orderable: false, searchable: false, className: 'no-export' },
+      { targets: [COL.ITEMS], type: 'num' },
+      { targets: [COL.NO, 9], responsivePriority: 1 },
+      { targets: [COL.STATUS, COL.DATE], responsivePriority: 2 },
+      { targets: [COL.DEPT, COL.PRIORITY], responsivePriority: 3 },
+      { targets: [COL.WAREHOUSE, COL.BY, COL.ITEMS], responsivePriority: 10000 }
+    ],
+    layout: {
+      topStart: {
+        buttons: [
+          { extend: 'excelHtml5', text: 'Excel', title: 'Lista Rekizisaun', filename: () => 'rekizisaun_' + today(), exportOptions: exportCols },
+          {
+            extend: 'pdfHtml5', text: 'PDF', title: 'Lista Rekizisaun', filename: () => 'rekizisaun_' + today(),
+            orientation: 'landscape', pageSize: 'A4', exportOptions: exportCols,
+            customize: function (doc) {
+              doc.defaultStyle.fontSize = 8;
+              doc.styles.tableHeader.fillColor = '#1f2328';
+              doc.content[doc.content.length - 1].layout = 'lightHorizontalLines';
+              doc.footer = (page, pages) => ({ text: page + ' / ' + pages, alignment: 'center', fontSize: 8, margin: [0, 8, 0, 0] });
+            }
+          },
+          { extend: 'print', text: 'Print', title: 'Lista Rekizisaun', exportOptions: exportCols },
+          { extend: 'colvis', text: 'Koluna', columns: ':not(.no-export)' },
+          {
+            text: 'Pendente de’it',
+            action: function (e, dt, node) {
+              pendingOnly = !pendingOnly;
+              node.toggleClass('active', pendingOnly);
+              dt.draw();
+            }
+          }
+        ]
+      },
+      topEnd: 'search',
+      bottomStart: ['pageLength', 'info'],
+      bottomEnd: 'paging'
+    },
+    initComplete: function () {
+      const api = this.api();
+      api.columns().every(function () {
+        const column = this;
+        const idx = column.index();
+        const footer = column.footer();
+        if (!footer) return;
+        const label = column.header().textContent.trim();
+
+        if (idx === COL.DEPT) {
+          const input = footer.querySelector('input');
+          if (!input) return;
+          input.addEventListener('input', () => {
+            if (column.search() !== input.value) column.search(input.value).draw();
+          });
+        } else if ([COL.WAREHOUSE, COL.PRIORITY, COL.STATUS].includes(idx)) {
+          const select = document.createElement('select');
+          select.setAttribute('aria-label', 'Filtra ' + label);
+          select.add(new Option('Hotu', ''));
+          footer.replaceChildren(select);
+          const values = new Set();
+          column.nodes().each(n => { const t = n.textContent.replace(/\s+/g, ' ').trim(); if (t) values.add(t); });
+          [...values].sort((a, b) => a.localeCompare(b)).forEach(v => select.add(new Option(v, v)));
+          select.addEventListener('change', () => {
+            const v = select.value;
+            column.search(v ? '^\\s*' + escapeRegex(v) + '\\s*$' : '', { regex: true, smart: false }).draw();
+          });
+        }
+      });
+    },
+    drawCallback: function () {
+      const api = this.api();
+      const info = api.page.info();
+      api.column(0, { search: 'applied', order: 'applied', page: 'current' }).nodes().each((cell, i) => {
+        cell.textContent = info.start + i + 1;
+      });
+      let pending = 0, approved = 0, issued = 0;
+      api.rows({ search: 'applied' }).every(function () {
+        const s = this.node().dataset.status;
+        if (s === 'pending') pending++;
+        else if (s === 'approved') approved++;
+        else if (s === 'issued') issued++;
+      });
+      document.getElementById('statRows').textContent = info.recordsDisplay.toLocaleString('en-US');
+      document.getElementById('statPending').textContent = pending.toLocaleString('en-US');
+      document.getElementById('statApproved').textContent = approved.toLocaleString('en-US');
+      document.getElementById('statIssued').textContent = issued.toLocaleString('en-US');
+    },
+    language: {
+      search: '', searchPlaceholder: 'Buka rekizisaun...',
+      lengthMenu: 'Hatudu _MENU_',
+      info: 'Hatudu _START_ to _END_ husi _TOTAL_ rekizisaun',
+      infoEmpty: 'La iha dadus',
+      infoFiltered: '(filtra husi _MAX_ total)',
+      zeroRecords: 'La hetan dadus ne’ebé hanesan',
+      emptyTable: 'Seidauk iha rekizisaun. Klik “Rekizisaun Foun” atu hahu.',
+      paginate: { first: 'Dahuluk', last: 'Ikus', next: 'Tuir', previous: 'Molok' },
+      buttons: { colvis: 'Koluna' }
+    }
+  });
+
+  window.addEventListener('resize', () => table.columns.adjust().responsive.recalc());
+});
+</script>
+{% endblock %}

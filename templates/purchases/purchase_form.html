@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Inventory Web{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; max-width: 980px; margin: 0 auto; }
+  .pl-head { padding: 1.5rem 1.5rem 1.1rem; border-bottom: 1px solid var(--pl-line); }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-body { padding: 1.5rem; display: grid; gap: 1.25rem; }
+  .pl-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.25rem; }
+  .pl-row.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pl-section { margin: .25rem 0 -.5rem; font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--pl-muted); }
+  .pl-foot { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--pl-line); }
+
+  .pl-field label { display: block; margin-bottom: .35rem; font-size: .8rem; font-weight: 600; color: #374151; }
+  .pl-field input:not([type=checkbox]), .pl-field select, .pl-field textarea,
+  .pl-items input:not([type=checkbox]), .pl-items select {
+    display: block; width: 100%; padding: .5rem .75rem; font-size: .9rem; line-height: 1.4;
+    color: var(--pl-ink); background: #fff; border: 1px solid var(--pl-line); border-radius: 8px; box-shadow: none; transition: border-color .15s;
+  }
+  .pl-field textarea { min-height: 84px; resize: vertical; }
+  .pl-field input:focus, .pl-field select:focus, .pl-field textarea:focus,
+  .pl-items input:focus, .pl-items select:focus { outline: none; border-color: #6b7280; box-shadow: 0 0 0 3px rgba(31,35,40,.06); }
+  .pl-field input::placeholder, .pl-field textarea::placeholder { color: #a3a9b3; }
+  .pl-field.has-error input, .pl-field.has-error select, .pl-field.has-error textarea,
+  .pl-items .has-error input, .pl-items .has-error select { border-color: var(--pl-alert); }
+  .pl-error { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-alert); }
+  .pl-hint { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-muted); }
+
+  /* Tabela item */
+  .pl-items-wrap { border: 1px solid var(--pl-line); border-radius: 10px; overflow: hidden; }
+  .pl-items { width: 100%; border-collapse: collapse; }
+  .pl-items thead th { padding: .65rem .75rem; background: var(--pl-soft); color: var(--pl-muted); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; border-bottom: 1px solid var(--pl-line); white-space: nowrap; }
+  .pl-items td { padding: .6rem .6rem; vertical-align: top; border-bottom: 1px solid var(--pl-line); }
+  .pl-items tbody tr:last-child td { border-bottom: 0; }
+  .pl-items .col-product { width: 46%; }
+  .pl-items .col-qty { width: 15%; }
+  .pl-items .col-price { width: 17%; }
+  .pl-items .col-sub { width: 16%; }
+  .pl-items .col-act { width: 6%; }
+  .pl-items td.pl-sub { padding-top: 1.05rem; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  .pl-del { display: none; }
+  .pl-rm { width: 32px; height: 32px; margin-top: .1rem; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--pl-muted); border-radius: 8px; transition: background .15s, color .15s; cursor: pointer; }
+  .pl-rm:hover { background: var(--pl-soft); color: var(--pl-alert); }
+  .pl-items-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .75rem .9rem; border-top: 1px solid var(--pl-line); background: #fff; }
+  .pl-total { font-size: .85rem; color: var(--pl-muted); }
+  .pl-total strong { margin-left: .5rem; font-size: 1.1rem; color: var(--pl-ink); font-variant-numeric: tabular-nums; }
+
+  .pl-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 500; line-height: 1.4; border-radius: 8px; border: 1px solid var(--pl-line); background: #fff; color: #374151; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+  .pl-btn:hover { background: var(--pl-soft); color: var(--pl-ink); text-decoration: none; }
+  .pl-btn.primary { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; }
+  .pl-btn.primary:hover { background: #000; border-color: #000; color: #fff; }
+  .pl-btn.small { padding: .35rem .8rem; font-size: .8rem; }
+
+  .pl-alert { padding: .75rem 1rem; font-size: .85rem; color: var(--pl-alert); background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px; }
+
+  @media (max-width: 767.98px) {
+    .pl-row, .pl-row.three { grid-template-columns: 1fr; }
+    .pl-head, .pl-body, .pl-foot { padding-left: 1rem; padding-right: 1rem; }
+    .pl-items thead { display: none; }
+    .pl-items, .pl-items tbody, .pl-items tr, .pl-items td { display: block; width: 100%; }
+    .pl-items tr { padding: .6rem .5rem; border-bottom: 1px solid var(--pl-line); }
+    .pl-items td { border: 0; padding: .25rem .5rem; }
+    .pl-items td.pl-sub { text-align: left; padding-top: .25rem; }
+    .pl-items .col-product, .pl-items .col-qty, .pl-items .col-price, .pl-items .col-sub, .pl-items .col-act { width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pl-card">
+  <div class="pl-head">
+    <h1 class="pl-title">{{ title }}</h1>
+    <p class="pl-sub">Prense informasaun sosa no lista produtu. Stock sei tama bainhira sosa marka “Simu”.</p>
+  </div>
+
+  <form method="post" novalidate id="purchaseForm">
+    {% csrf_token %}
+    <div class="pl-body">
+      {% if form.non_field_errors %}
+      <div class="pl-alert" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="pl-row three">
+        <div class="pl-field{% if form.invoice_no.errors %} has-error{% endif %}">
+          <label for="{{ form.invoice_no.id_for_label }}">{{ form.invoice_no.label }}</label>
+          {{ form.invoice_no }}
+          {% for e in form.invoice_no.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field{% if form.date.errors %} has-error{% endif %}">
+          <label for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+          {{ form.date }}
+          {% for e in form.date.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field"><label>Status</label>
+          <input type="text" value="Pendente" disabled aria-label="Status">
+        </div>
+      </div>
+
+      <div class="pl-row">
+        <div class="pl-field{% if form.supplier.errors %} has-error{% endif %}">
+          <label for="{{ form.supplier.id_for_label }}">{{ form.supplier.label }}</label>
+          {{ form.supplier }}
+          {% for e in form.supplier.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field{% if form.warehouse.errors %} has-error{% endif %}">
+          <label for="{{ form.warehouse.id_for_label }}">{{ form.warehouse.label }}</label>
+          {{ form.warehouse }}
+          {% for e in form.warehouse.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+          <small class="pl-hint">Armazén ne'ebé simu stock.</small>
+        </div>
+      </div>
+
+      <div class="pl-section">Item Sosa</div>
+
+      {% if formset.non_form_errors %}
+      <div class="pl-alert" role="alert">{{ formset.non_form_errors }}</div>
+      {% endif %}
+
+      {{ formset.management_form }}
+      <div class="pl-items-wrap">
+        <table class="pl-items" id="itemsTable">
+          <thead>
+            <tr>
+              <th class="col-product">Produtu</th>
+              <th class="col-qty">Kuantidade</th>
+              <th class="col-price">Folin Unidade ($)</th>
+              <th class="col-sub text-end">Subtotal</th>
+              <th class="col-act"></th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody">
+            {% for f in formset %}
+            <tr class="pl-item-row">
+              <td class="col-product{% if f.product.errors %} has-error{% endif %}">
+                {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+                {{ f.product }}
+                {% for e in f.product.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+                {% for e in f.non_field_errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+              </td>
+              <td class="col-qty{% if f.quantity.errors %} has-error{% endif %}">
+                {{ f.quantity }}
+                {% for e in f.quantity.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+              </td>
+              <td class="col-price{% if f.unit_price.errors %} has-error{% endif %}">
+                {{ f.unit_price }}
+                {% for e in f.unit_price.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+              </td>
+              <td class="col-sub pl-sub">$0.00</td>
+              <td class="col-act">
+                <span class="pl-del">{{ f.DELETE }}</span>
+                <button type="button" class="pl-rm" title="Hasai liña" aria-label="Hasai liña"><i class="fas fa-xmark"></i></button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="pl-items-foot">
+          <button type="button" class="pl-btn small" id="addRow"><i class="fas fa-plus"></i> Aumenta Item</button>
+          <div class="pl-total">Total<strong id="grandTotal">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="pl-field{% if form.note.errors %} has-error{% endif %}">
+        <label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+        {{ form.note }}
+        {% for e in form.note.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        <small class="pl-hint">Opsionál.</small>
+      </div>
+    </div>
+
+    <div class="pl-foot">
+      <button type="submit" class="pl-btn primary"><i class="fas fa-check"></i> Rai Sosa</button>
+      <a href="{% url 'purchases:purchase_list' %}" class="pl-btn">Kansela</a>
+    </div>
+  </form>
+</div>
+
+{# Modelu liña foun (ba JS) #}
+<template id="itemTemplate">
+  <tr class="pl-item-row">
+    <td class="col-product">
+      {% for h in formset.empty_form.hidden_fields %}{{ h }}{% endfor %}
+      {{ formset.empty_form.product }}
+    </td>
+    <td class="col-qty">{{ formset.empty_form.quantity }}</td>
+    <td class="col-price">{{ formset.empty_form.unit_price }}</td>
+    <td class="col-sub pl-sub">$0.00</td>
+    <td class="col-act">
+      <span class="pl-del">{{ formset.empty_form.DELETE }}</span>
+      <button type="button" class="pl-rm" title="Hasai liña" aria-label="Hasai liña"><i class="fas fa-xmark"></i></button>
+    </td>
+  </tr>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const prefix = '{{ formset.prefix }}';
+  const body = document.getElementById('itemsBody');
+  const tpl = document.getElementById('itemTemplate');
+  const totalForms = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+  const grand = document.getElementById('grandTotal');
+  const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+  const visibleRows = () => [...body.querySelectorAll('.pl-item-row')].filter(r => !r.hidden);
+
+  function recalc() {
+    let total = 0;
+    visibleRows().forEach(row => {
+      const q = parseFloat(row.querySelector('input[name$="-quantity"]').value) || 0;
+      const p = parseFloat(row.querySelector('input[name$="-unit_price"]').value) || 0;
+      const sub = q * p;
+      row.querySelector('.pl-sub').textContent = money.format(sub);
+      total += sub;
+    });
+    grand.textContent = money.format(total);
+  }
+
+  function addRow() {
+    const index = parseInt(totalForms.value, 10);
+    const html = tpl.innerHTML.replace(/__prefix__/g, index);
+    const holder = document.createElement('tbody');
+    holder.innerHTML = html;
+    const row = holder.firstElementChild;
+    body.appendChild(row);
+    totalForms.value = index + 1;
+    recalc();
+    return row;
+  }
+
+  // Hasai liña = tau tanda DELETE no subar (forma Django nian)
+  body.addEventListener('click', function (e) {
+    const btn = e.target.closest('.pl-rm');
+    if (!btn) return;
+    const row = btn.closest('.pl-item-row');
+    const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (del) del.checked = true;
+    row.hidden = true;
+    if (visibleRows().length === 0) addRow();
+    recalc();
+  });
+
+  // Hili produtu -> prense folin sosa automátiku (se seidauk muda manuál)
+  body.addEventListener('change', function (e) {
+    if (!e.target.matches('select[name$="-product"]')) return;
+    const row = e.target.closest('.pl-item-row');
+    const price = row.querySelector('input[name$="-unit_price"]');
+    const opt = e.target.selectedOptions[0];
+    if (opt && opt.dataset.price && (!price.value || price.dataset.auto === '1')) {
+      price.value = opt.dataset.price;
+      price.dataset.auto = '1';
+    }
+    recalc();
+  });
+  body.addEventListener('input', function (e) {
+    if (e.target.matches('input[name$="-unit_price"]')) e.target.dataset.auto = '0';
+    if (e.target.matches('input')) recalc();
+  });
+
+  document.getElementById('addRow').addEventListener('click', function () {
+    const row = addRow();
+    const sel = row.querySelector('select');
+    if (sel) sel.focus();
+  });
+
+  // Hodi rows ne'ebé hetan DELETE ona (bainhira form fila ho erru)
+  body.querySelectorAll('.pl-item-row').forEach(row => {
+    const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (del && del.checked) row.hidden = true;
+  });
+  if (visibleRows().length === 0) addRow();
+  recalc();
+});
+</script>
+{% endblock %}

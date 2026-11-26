@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}{{ purchase.invoice_no }} | Inventory Web{% endblock %}
+{% block page_title %}Detallu Sosa{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; max-width: 980px; margin: 0 auto; }
+  .pl-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.5rem 1.5rem 1.1rem; border-bottom: 1px solid var(--pl-line); }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .pl-sub { margin: .3rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .pl-body { padding: 1.5rem; display: grid; gap: 1.5rem; }
+
+  .pl-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.1rem 1.5rem; margin: 0; }
+  .pl-meta dt { font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--pl-muted); margin-bottom: .2rem; }
+  .pl-meta dd { margin: 0; font-size: .92rem; color: var(--pl-ink); }
+  .pl-meta .wide { grid-column: span 4; }
+
+  .pl-dot { display: inline-flex; align-items: center; gap: .45rem; font-size: .85rem; padding: .2rem .7rem; border: 1px solid var(--pl-line); border-radius: 999px; background: var(--pl-soft); }
+  .pl-dot::before { content: ''; box-sizing: border-box; width: 8px; height: 8px; border-radius: 50%; }
+  .pl-dot.st-pending::before { border: 1.5px solid #6b7280; background: transparent; }
+  .pl-dot.st-received::before { background: #374151; }
+  .pl-dot.st-cancelled { color: var(--pl-muted); }
+  .pl-dot.st-cancelled::before { background: #c2c7cf; }
+
+  .pl-items-wrap { border: 1px solid var(--pl-line); border-radius: 10px; overflow: hidden; }
+  .pl-items { width: 100%; border-collapse: collapse; }
+  .pl-items thead th { padding: .65rem .85rem; background: var(--pl-soft); color: var(--pl-muted); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; border-bottom: 1px solid var(--pl-line); white-space: nowrap; }
+  .pl-items td { padding: .75rem .85rem; border-bottom: 1px solid var(--pl-line); font-size: .9rem; vertical-align: middle; }
+  .pl-items tbody tr:last-child td { border-bottom: 0; }
+  .pl-items tfoot td { padding: .85rem; border-top: 1px solid var(--pl-line); background: #fff; }
+  .pl-num { font-variant-numeric: tabular-nums; }
+  .pl-sku { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; color: var(--pl-muted); }
+  .pl-grand { font-size: 1.1rem; font-weight: 700; }
+
+  .pl-msg { margin: 0 0 .25rem; padding: .7rem 1rem; font-size: .85rem; border-radius: 8px; border: 1px solid var(--pl-line); background: var(--pl-soft); color: #374151; }
+  .pl-msg.error { color: var(--pl-alert); background: #fef3f2; border-color: #fecdca; }
+  .pl-note { padding: .75rem 1rem; font-size: .85rem; color: var(--pl-muted); background: var(--pl-soft); border: 1px solid var(--pl-line); border-radius: 8px; }
+
+  .pl-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 500; line-height: 1.4; border-radius: 8px; border: 1px solid var(--pl-line); background: #fff; color: #374151; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+  .pl-btn:hover { background: var(--pl-soft); color: var(--pl-ink); text-decoration: none; }
+  .pl-btn.primary { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; }
+  .pl-btn.primary:hover { background: #000; border-color: #000; color: #fff; }
+  .pl-btn.danger:hover { color: var(--pl-alert); border-color: #fecdca; }
+
+  .pl-modal .modal-content { border: 0; border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.15); }
+  .pl-modal .modal-header, .pl-modal .modal-footer { border: 0; }
+
+  @media (max-width: 767.98px) {
+    .pl-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pl-meta .wide { grid-column: span 2; }
+    .pl-head, .pl-body { padding-left: 1rem; padding-right: 1rem; }
+  }
+  @media print {
+    .pl-actions, .no-print { display: none !important; }
+    .pl-card { border: 0; max-width: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% load l10n %}
+<div class="pl-card">
+  <div class="pl-head">
+    <div>
+      <h1 class="pl-title">{{ purchase.invoice_no }}</h1>
+      <p class="pl-sub">
+        <span class="pl-dot st-{{ purchase.status }}">
+          {% if purchase.status == 'pending' %}Pendente{% elif purchase.status == 'received' %}Simu ona{% else %}Kansela{% endif %}
+        </span>
+      </p>
+    </div>
+    <div class="pl-actions">
+      <a href="{% url 'purchases:purchase_list' %}" class="pl-btn"><i class="fas fa-arrow-left"></i> Fila</a>
+      <button type="button" class="pl-btn" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      {% if purchase.status == 'pending' %}
+        <a href="{% url 'purchases:purchase_update' purchase.pk %}" class="pl-btn"><i class="fas fa-pen"></i> Edita</a>
+        <button type="button" class="pl-btn danger" data-bs-toggle="modal" data-bs-target="#cancelModal"><i class="fas fa-ban"></i> Kansela</button>
+        <button type="button" class="pl-btn primary" data-bs-toggle="modal" data-bs-target="#receiveModal"><i class="fas fa-box-open"></i> Simu Stock</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="pl-body">
+    {% if messages %}
+      <div>
+        {% for m in messages %}
+          <div class="pl-msg{% if m.tags == 'error' %} error{% endif %}" role="status">{{ m }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <dl class="pl-meta">
+      <div><dt>Fornesedór</dt><dd>{{ purchase.supplier.name }}</dd></div>
+      <div><dt>Armazén</dt><dd>{{ purchase.warehouse.name }}</dd></div>
+      <div><dt>Data</dt><dd class="pl-num">{{ purchase.date|date:"d/m/Y" }}</dd></div>
+      <div><dt>Kria husi</dt><dd>{% if purchase.created_by %}{{ purchase.created_by.get_full_name|default:purchase.created_by.get_username }}{% else %}—{% endif %}</dd></div>
+      {% if purchase.note %}<div class="wide"><dt>Nota</dt><dd>{{ purchase.note|linebreaksbr }}</dd></div>{% endif %}
+    </dl>
+
+    <div class="pl-items-wrap">
+      <table class="pl-items">
+        <thead>
+          <tr>
+            <th style="width:5%">#</th>
+            <th>Produtu</th>
+            <th class="text-end">Kuantidade</th>
+            <th class="text-end">Folin Unidade</th>
+            <th class="text-end">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td class="pl-num" style="color:var(--pl-muted)">{{ forloop.counter }}</td>
+            <td>
+              <div class="fw-medium">{{ item.product.name }}</div>
+              {% if item.product.sku %}<div class="pl-sku">{{ item.product.sku }}</div>{% endif %}
+            </td>
+            <td class="text-end pl-num">{{ item.quantity }}{% if item.product.unit %} <span style="color:var(--pl-muted)">{{ item.product.unit }}</span>{% endif %}</td>
+            <td class="text-end pl-num">${{ item.unit_price|floatformat:2 }}</td>
+            <td class="text-end pl-num fw-medium">${{ item.subtotal|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="text-end" style="color:var(--pl-muted)">Total</td>
+            <td class="text-end pl-num pl-grand">${{ total|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    {% if purchase.status == 'received' %}
+      <div class="pl-note no-print">
+        Stock tama ona iha armazén “{{ purchase.warehouse.name }}”. Haree istória iha
+        <a href="{% url 'stock:movement_list' %}">Istória Movimentu</a> (referénsia {{ purchase.invoice_no }}).
+      </div>
+    {% elif purchase.status == 'cancelled' %}
+      <div class="pl-note no-print">Sosa ne'e kansela ona. Stock la muda.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% if purchase.status == 'pending' %}
+<div class="modal fade pl-modal" id="receiveModal" tabindex="-1" aria-labelledby="receiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <form method="post" action="{% url 'purchases:purchase_receive' purchase.pk %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-body p-4 text-center">
+        <h2 class="fs-6 fw-semibold mb-2" id="receiveModalLabel">Simu stock?</h2>
+        <p class="mb-1 fw-medium">{{ purchase.invoice_no }}</p>
+        <p class="small mb-0" style="color:var(--pl-muted)">Stock ba produtu hotu iha sosa ne'e sei tama iha “{{ purchase.warehouse.name }}”. Asaun ne'e la bele fila fali.</p>
+      </div>
+      <div class="modal-footer justify-content-center pt-0 pb-4 gap-2">
+        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Kansela</button>
+        <button type="submit" class="btn btn-dark">Sim, Simu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade pl-modal" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <form method="post" action="{% url 'purchases:purchase_cancel' purchase.pk %}" class="modal-content">
+      {% csrf_token %}
+      <div class="modal-body p-4 text-center">
+        <h2 class="fs-6 fw-semibold mb-2" id="cancelModalLabel">Kansela sosa?</h2>
+        <p class="mb-1 fw-medium">{{ purchase.invoice_no }}</p>
+        <p class="small mb-0" style="color:var(--pl-muted)">Sosa sei marka “Kansela” no stock la muda.</p>
+      </div>
+      <div class="modal-footer justify-content-center pt-0 pb-4 gap-2">
+        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Taka</button>
+        <button type="submit" class="btn btn-danger">Kansela Sosa</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Erro Servidor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f14e4e 0%, #fc79ce 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .error-container {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+        }
+        
+        .error-code {
+            font-size: 150px;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .error-icon {
+            font-size: 100px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .error-message {
+            font-size: 28px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        
+        .error-description {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .btn-home {
+            background: white;
+            color: #f5576c;
+            border: none;
+            padding: 12px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-home:hover {
+            background: #f0f0f0;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            color: #f5576c;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="bi bi-tools"></i>
+        </div>
+        <div class="error-code">500</div>
+        <h1 class="error-message">Servidor Erru</h1>
+        <p class="error-description">
+            Deskulpa, Sei problema iha servidor.<br>
+            Parte Tekniku sei halo manutensaun. Por favor koko fali oras tuir mai.
+        </p>
+        <div class="mt-4">
+            <a href="javascript:history.back()" class="btn-home">
+                <i class="bi bi-house-door me-2"></i>Fila
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

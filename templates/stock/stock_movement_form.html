@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Inventory Web{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --pl-ink: #1f2328; --pl-muted: #6b7280; --pl-line: #e5e7eb; --pl-soft: #f6f7f8; --pl-alert: #b42318; }
+
+  .pl-card { background: #fff; border: 1px solid var(--pl-line); border-radius: 12px; max-width: 720px; margin: 0 auto; }
+  .pl-head { padding: 1.5rem 1.5rem 1.1rem; border-bottom: 1px solid var(--pl-line); }
+  .pl-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--pl-ink); letter-spacing: -.01em; }
+  .pl-sub { margin: .2rem 0 0; font-size: .85rem; color: var(--pl-muted); }
+  .pl-body { padding: 1.5rem; display: grid; gap: 1.1rem; }
+  .pl-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.25rem; }
+  .pl-foot { display: flex; flex-wrap: wrap; gap: .6rem; padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--pl-line); }
+
+  .pl-field label.pl-label { display: block; margin-bottom: .35rem; font-size: .8rem; font-weight: 600; color: #374151; }
+  .pl-field input:not([type=radio]), .pl-field select, .pl-field textarea {
+    display: block; width: 100%; padding: .5rem .75rem; font-size: .9rem; line-height: 1.4;
+    color: var(--pl-ink); background: #fff; border: 1px solid var(--pl-line); border-radius: 8px; box-shadow: none; transition: border-color .15s;
+  }
+  .pl-field textarea { min-height: 84px; resize: vertical; }
+  .pl-field input:focus, .pl-field select:focus, .pl-field textarea:focus { outline: none; border-color: #6b7280; box-shadow: 0 0 0 3px rgba(31,35,40,.06); }
+  .pl-field input::placeholder, .pl-field textarea::placeholder { color: #a3a9b3; }
+  .pl-field.has-error input:not([type=radio]), .pl-field.has-error select, .pl-field.has-error textarea { border-color: var(--pl-alert); }
+  .pl-error { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-alert); }
+  .pl-hint { display: block; margin-top: .3rem; font-size: .78rem; color: var(--pl-muted); }
+  .pl-live { display: block; margin-top: .3rem; font-size: .8rem; color: var(--pl-ink); font-weight: 600; min-height: 1.1em; }
+
+  /* Segmented control ba tipu movimentu */
+  .pl-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; padding: 3px; background: var(--pl-soft); border: 1px solid var(--pl-line); border-radius: 10px; }
+  .pl-seg-item { position: relative; margin: 0; cursor: pointer; }
+  .pl-seg-item input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .pl-seg-item span { display: block; text-align: center; padding: .45rem .5rem; font-size: .85rem; font-weight: 500; color: var(--pl-muted); border-radius: 8px; transition: background .15s, color .15s; }
+  .pl-seg-item input:checked + span { background: #fff; color: var(--pl-ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .pl-seg-item input:focus-visible + span { outline: 2px solid #9ca3af; outline-offset: 1px; }
+
+  .pl-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 500; line-height: 1.4; border-radius: 8px; border: 1px solid var(--pl-line); background: #fff; color: #374151; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+  .pl-btn:hover { background: var(--pl-soft); color: var(--pl-ink); text-decoration: none; }
+  .pl-btn.primary { background: var(--pl-ink); border-color: var(--pl-ink); color: #fff; }
+  .pl-btn.primary:hover { background: #000; border-color: #000; color: #fff; }
+
+  .pl-alert { padding: .75rem 1rem; font-size: .85rem; color: var(--pl-alert); background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px; }
+
+  @media (max-width: 575.98px) {
+    .pl-row { grid-template-columns: 1fr; }
+    .pl-head, .pl-body, .pl-foot { padding-left: 1rem; padding-right: 1rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pl-card">
+  <div class="pl-head">
+    <h1 class="pl-title">{{ title }}</h1>
+    <p class="pl-sub">Rekorda tama, sai ka ajustamentu stock. Movimentu rai ona la bele muda.</p>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="pl-body">
+      {% if form.non_field_errors %}
+      <div class="pl-alert" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="pl-field{% if form.movement_type.errors %} has-error{% endif %}">
+        <span class="pl-label" style="display:block;margin-bottom:.35rem;font-size:.8rem;font-weight:600;color:#374151;">{{ form.movement_type.label }}</span>
+        <div class="pl-seg" role="radiogroup" aria-label="{{ form.movement_type.label }}">
+          {% for r in form.movement_type %}
+          <label class="pl-seg-item">{{ r.tag }}<span>{{ r.choice_label }}</span></label>
+          {% endfor %}
+        </div>
+        {% for e in form.movement_type.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+      </div>
+
+      <div class="pl-row">
+        <div class="pl-field{% if form.product.errors %} has-error{% endif %}">
+          <label class="pl-label" for="{{ form.product.id_for_label }}">{{ form.product.label }}</label>
+          {{ form.product }}
+          {% for e in form.product.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+        <div class="pl-field{% if form.warehouse.errors %} has-error{% endif %}">
+          <label class="pl-label" for="{{ form.warehouse.id_for_label }}">{{ form.warehouse.label }}</label>
+          {{ form.warehouse }}
+          {% for e in form.warehouse.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="pl-row">
+        <div class="pl-field{% if form.quantity.errors %} has-error{% endif %}">
+          <label class="pl-label" for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>
+          {{ form.quantity }}
+          {% for e in form.quantity.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+          <small class="pl-hint" id="qtyHint"></small>
+        </div>
+        <div class="pl-field">
+          <label class="pl-label">Stock atuál</label>
+          <span class="pl-live" id="currentStock" aria-live="polite">—</span>
+          <small class="pl-hint">Hili produtu no armazén atu haree.</small>
+        </div>
+      </div>
+
+      <div class="pl-field{% if form.reference.errors %} has-error{% endif %}">
+        <label class="pl-label" for="{{ form.reference.id_for_label }}">{{ form.reference.label }}</label>
+        {{ form.reference }}
+        {% for e in form.reference.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+        <small class="pl-hint">Opsionál. Ezemplu: numeru fatura sosa.</small>
+      </div>
+
+      <div class="pl-field{% if form.note.errors %} has-error{% endif %}">
+        <label class="pl-label" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+        {{ form.note }}
+        {% for e in form.note.errors %}<small class="pl-error">{{ e }}</small>{% endfor %}
+      </div>
+    </div>
+
+    <div class="pl-foot">
+      <button type="submit" class="pl-btn primary"><i class="fas fa-check"></i> Rai Movimentu</button>
+      <a href="{% url 'stock:movement_list' %}" class="pl-btn">Kansela</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const productSel = document.getElementById('{{ form.product.id_for_label }}');
+  const warehouseSel = document.getElementById('{{ form.warehouse.id_for_label }}');
+  const qtyInput = document.getElementById('{{ form.quantity.id_for_label }}');
+  const radios = document.querySelectorAll('input[name="movement_type"]');
+  const hint = document.getElementById('qtyHint');
+  const live = document.getElementById('currentStock');
+  const lookupUrl = '{% url "stock:quantity" %}';
+
+  const hints = {
+    in: 'Kuantidade tenke boot liu 0. Stock sei sa’e.',
+    out: 'Kuantidade tenke boot liu 0. Stock sei tun, no labele liu stock atuál.',
+    adjust: 'Pozitivu atu aumenta, negativu atu hamenus (ezemplu -3).'
+  };
+
+  function currentType() {
+    const r = document.querySelector('input[name="movement_type"]:checked');
+    return r ? r.value : 'in';
+  }
+
+  function updateType() {
+    const t = currentType();
+    hint.textContent = hints[t] || '';
+    if (t === 'adjust') qtyInput.removeAttribute('min'); else qtyInput.setAttribute('min', '1');
+  }
+
+  let controller = null;
+  async function updateStock() {
+    const p = productSel.value, w = warehouseSel.value;
+    if (!p || !w) { live.textContent = '—'; return; }
+    if (controller) controller.abort();
+    controller = new AbortController();
+    try {
+      const res = await fetch(lookupUrl + '?product=' + encodeURIComponent(p) + '&warehouse=' + encodeURIComponent(w), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: controller.signal
+      });
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      live.textContent = d.quantity.toLocaleString('en-US') + (d.unit ? ' ' + d.unit : '');
+    } catch (err) {
+      if (err.name !== 'AbortError') live.textContent = '—';
+    }
+  }
+
+  radios.forEach(r => r.addEventListener('change', updateType));
+  productSel.addEventListener('change', updateStock);
+  warehouseSel.addEventListener('change', updateStock);
+  updateType();
+  updateStock();
+});
+</script>
+{% endblock %}
